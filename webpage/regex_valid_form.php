@@ -1,24 +1,58 @@
 <?php
 
-	$pattern="";
-	$text="";
-	$replaceText="";
-	$replacedText="";
+$pattern = "";
+$text = "";
+$replaceText = "";
+$replacedText = "";
 
-	$match="Not checked yet.";
+$match = "Not checked yet.";
 
-if ($_SERVER["REQUEST_METHOD"]=="POST") {
-	$pattern=$_POST["pattern"];
-	$text=$_POST["text"];
-	$replaceText=$_POST["replaceText"];
+$email_pattern = "#([\w\.-]+)@([\w\.-]+)\.([a-z]{2,5})#";
+$phone_pattern = "#\+(998)-(\d{2})-?(\d{3})-?(\d{4})#";
 
-	$replacedText=preg_replace($pattern, $replaceText, $text);
+function pattern_checker($pattern)
+{
+    return function ($text) use ($pattern) {
+        if (preg_match($pattern, $text)) {
+            return "Pattern matches";
+        } else {
+            return "Pattern does not match";
+        }
+    };
 
-	if(preg_match($pattern, $text)) {
-						$match="Match!";
-					} else {
-						$match="Does not match!";
-					}
+}
+
+function remover($pattern){
+    return function ($text, $replacement) use($pattern){
+        return preg_replace($pattern, $replacement, $text);
+    };
+}
+
+$check_email = pattern_checker($email_pattern);
+$check_phone_number = pattern_checker($phone_pattern);
+$remove_whitespaces = remover("# #");
+$remove_non_numerics = remover("#[^0-9\.,]*#");
+$remove_new_lines = remover("#\n\r#");
+
+function extract_from_brackets($text)
+{
+    $pattern = "#\[[\w]*\]#";
+    preg_match($pattern, $text, $matches);
+    return preg_replace("#[\[\]]#", '', $matches[0]);
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $pattern = $_POST["pattern"];
+    $text = $_POST["text"];
+    $replaceText = $_POST["replaceText"];
+
+    $replacedText = preg_replace($pattern, $replaceText, $text);
+
+    if (preg_match($pattern, $text)) {
+        $match = "Match!";
+    } else {
+        $match = "Does not match!";
+    }
 }
 
 ?>
@@ -27,31 +61,31 @@ if ($_SERVER["REQUEST_METHOD"]=="POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Valid Form</title>
+    <meta charset="UTF-8">
+    <title>Valid Form</title>
 </head>
 <body>
-	<form action="regex_valid_form.php" method="post">
-		<dl>
-			<dt>Pattern</dt>
-			<dd><input type="text" name="pattern" value="<?= $pattern ?>"></dd>
+<form action="regex_valid_form.php" method="post">
+    <dl>
+        <dt>Pattern</dt>
+        <dd><input type="text" name="pattern" value="<?= $pattern ?>"></dd>
 
-			<dt>Text</dt>
-			<dd><input type="text" name="text" value="<?= $text ?>"></dd>
+        <dt>Text</dt>
+        <dd><input type="text" name="text" value="<?= $text ?>"></dd>
 
-			<dt>Replace Text</dt>
-			<dd><input type="text" name="replaceText" value="<?= $replaceText ?>"></dd>
+        <dt>Replace Text</dt>
+        <dd><input type="text" name="replaceText" value="<?= $replaceText ?>"></dd>
 
-			<dt>Output Text</dt>
-			<dd><?=	$match ?></dd>
+        <dt>Output Text</dt>
+        <dd><?= $match ?></dd>
 
-			<dt>Replaced Text</dt>
-			<dd> <code><?=	$replacedText ?></code></dd>
+        <dt>Replaced Text</dt>
+        <dd><code><?= $replacedText ?></code></dd>
 
-			<dt>&nbsp;</dt>
-			<dd><input type="submit" value="Check"></dd>
-		</dl>
+        <dt>&nbsp;</dt>
+        <dd><input type="submit" value="Check"></dd>
+    </dl>
 
-	</form>
+</form>
 </body>
 </html>
